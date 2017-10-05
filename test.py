@@ -163,7 +163,7 @@ for idmisurazione in listaIdMisurazioni:
 			ipToId=dict()
 			idToIp=dict()
 			idCounter=0
-			
+
 			asList=set()
 			simmDiff=list()
 			asListComplete=set()
@@ -179,13 +179,22 @@ for idmisurazione in listaIdMisurazioni:
 					ipToId,idToIp,idCounter=updateMaps(traceroute,ipToId,idToIp)
 					splittedTraceroutesList.append(traceroute.split("-"))
 
+			splittedTracerouteIDs=list()
+
+			for splittedTracerouteInList in splittedTraceroutesList:
+				idList=list()
+				for ip in splittedTracerouteInList:
+					idlist.append(ipToId[ip])
+				splittedTracerouteIDs.append(idList)
+
+
 
 			counter=0
 
-			simmDiff = splittedTraceroutesList[0]
+			simmDiff = splittedTracerouteIDs[0]
 
-			for i in range(len(splittedTraceroutesList) - 1):
-				simmDiff = list(set(simmDiff) ^ set(splittedTraceroutesList[i + 1]))
+			for i in range(len(splittedTracerouteIDs) - 1):
+				simmDiff = list(set(simmDiff) ^ set(splittedTracerouteIDs[i + 1]))
 
 			for notSharedIn in simmDiff:
 				if(notSharedIn!="*"):
@@ -195,6 +204,9 @@ for idmisurazione in listaIdMisurazioni:
 			if(len(asListComplete)>1):
 				print("+++++++++++++++++inizio+++++++++++++++++++")
 				print(simmDiff)
+				for ipId in simmDiff:
+					print(idToIp[ipId])
+					
 				print(listaTraceroute)
 				print(asListComplete)
 				print(tracerouteIDSequence)
