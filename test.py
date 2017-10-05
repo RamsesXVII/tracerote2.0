@@ -126,6 +126,35 @@ def updateMaps(traceroute,ipToId,idToIp,idCounter):
 			idToIp[idCounter]=ip
 	return ipToId,idToIp,idCounter
 
+def areEquivalent(refTraceroute,cmpTraceroute):
+	ref=set(refTraceroute)
+	ref.remove(0)
+	cmpa=set(cmpTraceroute)
+	cmpa.remove(0)
+
+	if(len(ref-cmpa)==0 and len(cmpa-ref)==0):
+		return True
+
+	return False
+
+
+
+def isAnAsterixDifference(refTraceroute,cmpTraceroute):
+
+	if(len(refTraceroute)!=len(cmpTraceroute)):
+		return False
+
+	length=len(refTraceroute)
+
+	for i in range(0,length):
+		if(refTraceroute[i]!=0 and cmpTraceroute[i]!=0):
+			return False
+
+	if(areEquivalent(refTraceroute,cmpTraceroute)):
+		return False
+
+	return True
+
 
 asndb = pyasn.pyasn('output.dat')
 
@@ -144,7 +173,6 @@ for idmisurazione in listaIdMisurazioni:
 		tracerouteToId,idToTraceroute=getTracerouteToIDs(pair,pairToTime2traceroute)
 
 		tracerouteIDSequence=list()
-
 		tracerouteIDSequence=getTracerouteIDsSequence(pair,pairToTime2traceroute,tracerouteToId)
 		
 		autocorrelationUtility=AutocorrelationUtility(tracerouteIDSequence)
@@ -162,7 +190,9 @@ for idmisurazione in listaIdMisurazioni:
 		for pattern in patterns:
 			ipToId=dict()
 			idToIp=dict()
-			idCounter=0
+			idCounter=100
+			ipToId["*"]=0
+			idToIp[0]="*"
 
 			asList=set()
 			simmDiff=list()
@@ -191,23 +221,41 @@ for idmisurazione in listaIdMisurazioni:
 
 			counter=0
 
-			simmDiff = splittedTracerouteIDs[0]
-
+			refTraceroute = splittedTracerouteIDs[0]
+			simmDiffUnion=list()
 			for i in range(len(splittedTracerouteIDs) - 1):
-				simmDiff = list(set(simmDiff) ^ set(splittedTracerouteIDs[i + 1]))
+				if not isAnAsterixDifference(refTraceroute,splittedTracerouteIDs[i + 1]):
+					simmDiff.append(list(set(refTraceroute) ^ set(splittedTracerouteIDs[i + 1])))
 
-			for notSharedIn in simmDiff:
-				if(notSharedIn!="*"):
-					asList.add(asndb.lookup(idToIp[notSharedIn])[0])
-					asListComplete.add(asndb.lookup(idToIp[notSharedIn]))
 
-			if(len(asListComplete)>1):
+			sequenceOfId=set()
+			for idsOfTraceroute in simmDiff:
+				for element in idsOfTraceroute:
+					sequenceOfId.add(element)
+
+			for notSharedIn in sequenceOfId:
+				realIP=idToIp[notSharedIn]
+				if(realIP!="*"):
+					try:
+						asList.add(asndb.lookup(realIP)[0])
+						asListComplete.add(asndb.lookup(realIP))
+					except:
+						print("errore")
+						print(realIP)
+
+
+			if(len(asList)>1):
 				print("+++++++++++++++++inizio+++++++++++++++++++")
-				print(simmDiff)
-				for ipId in simmDiff:
-					print(idToIp[ipId])
 
-				print(listaTraceroute)
+				print("..............")
+				print(idToIp)
+				print(splittedTracerouteIDs)
+				print(sequenceOfId)
+				print(pair)
+				for ipId in sequenceOfId:
+					print(idToIp[ipId])
+				print("..............")
+
 				print(asListComplete)
 				print(tracerouteIDSequence)
 				print(pattern)
